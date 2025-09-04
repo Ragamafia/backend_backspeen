@@ -1,19 +1,30 @@
 import aiohttp
+
 from json import JSONDecodeError
+
+from config import cfg
 
 
 class Client:
     def __init__(self):
         self.session = aiohttp.ClientSession()
-        self.headers = {
-            "Content-Type": "application/json",
-        }
 
-    async def create_user(self, url, username: str):
+    async def create(self, first_name, last_name, email, password):
         data = {
-            "username": username
+            "first_name": first_name,
+            "last_name": last_name,
+            "email": email,
+            "password": password
         }
-        await self.request("POST", url, json=data)
+        await self.post("register", json=data)
+
+    async def auth(self, email, password):
+        data = {
+            "email": email,
+            "password": password
+        }
+        await self.post("login", json=data)
+
 
     async def get(self, path: str, **kwargs):
         return await self.request("GET", path, **kwargs)
@@ -24,8 +35,7 @@ class Client:
     async def request(self, method: str, path: str, **kwargs):
         kwargs = dict(
             method=method,
-            url=path,
-            headers=self.headers,
+            url=f"{cfg.BASE_URL}/{path}",
             **kwargs
         )
         try:

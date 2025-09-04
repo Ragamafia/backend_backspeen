@@ -1,26 +1,27 @@
-from fastapi import FastAPI, Request
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI
 
-from models import User
+from server.api.requests import NewUserRequest, NewUserResponse, LoginRequest
 from db.ctrl import db
+from logger import logger
 
 
 app = FastAPI()
-templates = Jinja2Templates(directory="server/templates")
 
 
-@app.post("/")
-async def create_user(user: User):
-    await db.create(user.username)
+@app.post("/register")
+async def create_user(data: NewUserRequest):
+    if user := await db.create(data.first_name, data.last_name, data.email, data.password):
+        return NewUserResponse(success=True, result=user)
+    else:
+        logger.debug(f"User already exists")
+        return NewUserResponse(success=False, result=None)
 
 
-@app.get("/", response_class=HTMLResponse)
-async def get_users(request: Request):
-    users = await db.read()
-    users = [user.username for user in users]
-    markup = {
-        "request": request,
-        "users": users
-    }
-    return templates.TemplateResponse("index.html", markup)
+@app.post("/login")
+async def login(data: LoginRequest):
+    if user := await db.read(data.email, data.password):
+        logger.success(f"User {user["first_name"]} logged in")
+        return NewUserResponse(success=True, result=user)
+    else:
+        logger.warning(f"User {data.email} not found")
+        return NewUserResponse(success=False, result=None)

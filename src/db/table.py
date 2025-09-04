@@ -1,6 +1,12 @@
 from tortoise import fields, models
 
 
-class UserModel(models.Model):
+class UserDBModel(models.Model):
     id = fields.IntField(pk=True)
-    username = fields.CharField(max_length=50, unique=True)
+    first_name = fields.CharField(max_length=50, unique=True)
+    last_name = fields.CharField(max_length=50, unique=True)
+    email = fields.CharField(max_length=50, unique=True)
+    password = fields.CharField(max_length=50, unique=True)
+
+    is_active = fields.BooleanField(default=False)
+    is_admin = fields.BooleanField(default=False)
