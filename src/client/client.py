@@ -6,24 +6,30 @@ from config import cfg
 
 
 class Client:
+    headers: dict
+    access_token: str | None = None
+
     def __init__(self):
         self.session = aiohttp.ClientSession()
 
-    async def create(self, first_name, last_name, email, password):
+    async def create(self, name, last_name, email, password):
         data = {
-            "first_name": first_name,
+            "name": name,
             "last_name": last_name,
             "email": email,
             "password": password
         }
         await self.post("register", json=data)
 
-    async def auth(self, email, password):
+    async def login(self, email, password):
         data = {
             "email": email,
             "password": password
         }
         await self.post("login", json=data)
+
+    async def session(self):
+        await self.get("protected")
 
 
     async def get(self, path: str, **kwargs):

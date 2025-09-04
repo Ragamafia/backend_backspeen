@@ -1,5 +1,6 @@
+tortoise-orm
 aiohttp
 fastapi
 uvicorn[standart]
 pydantic
-jinja2
+pyjwt

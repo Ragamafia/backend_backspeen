@@ -2,7 +2,7 @@ import asyncio
 
 import uvicorn
 
-from client.client import Client
+from src.client import example
 
 
 async def run_server():
@@ -10,22 +10,8 @@ async def run_server():
     server = uvicorn.Server(config)
     await server.serve()
 
-async def register_user():
-    client = Client()
-    first_name = input("Enter first name: ")
-    last_name = input("Enter last name: ")
-    email = input("Enter email: ")
-    password = input("Enter password: ")
-    await client.create(first_name, last_name, email, password)
-
-async def login_user():
-    client = Client()
-    email = input("Enter email: ")
-    password = input("Enter password: ")
-    await client.auth(email, password)
-
 async def main():
-    await asyncio.gather(run_server(), login_user())
+    await asyncio.gather(run_server(), example.login_user())
 
 
 if __name__ == "__main__":
