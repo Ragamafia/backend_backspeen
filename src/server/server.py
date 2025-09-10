@@ -3,7 +3,8 @@ from fastapi import FastAPI
 
 from config import cfg
 from db.ctrl import DataBaseController
-from src.server.api.http import register_router
+from src.server.api.users import register_users_router
+from src.server.api.admin import register_admin_router
 
 class Server:
     app: FastAPI
@@ -14,7 +15,8 @@ class Server:
         self.db = DataBaseController()
 
     def run(self):
-        register_router(self)
+        register_users_router(self)
+        register_admin_router(self)
 
         uvicorn.run(
             self.app,

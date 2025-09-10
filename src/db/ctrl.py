@@ -9,10 +9,6 @@ from src.db.table import UserDBModel
 class DataBaseController(BaseDB):
     db: Type[Model] = UserDBModel
 
-    def __init__(self):
-        super().__init__()
-        self.db = UserDBModel
-
     @BaseDB.db_connect
     async def get_user(self, email):
         return await self.db.filter(email=email).first()

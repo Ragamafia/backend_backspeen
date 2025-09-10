@@ -11,7 +11,7 @@ PASSWORD = "123456"
 
 async def register_user():
     client = Client()
-    await client._create(
+    await client.create(
         name=NAME,
         last_name=LAST_NAME,
         email=EMAIL,
@@ -20,14 +20,13 @@ async def register_user():
 
 async def login_user():
     client = Client()
-    return await client._login(email=EMAIL, password=PASSWORD)
+    return await client.login(email=EMAIL, password=PASSWORD)
 
 async def get_user(data):
     client = Client()
-    return await client._get_user(data)
-#
-# async def login_admin():
-#     pass  # login as admin and return admin session
+    return await client.get_user(data)
+
+#async def login_admin():
 
 
 # def promote_user_to_moderator(admin_session, user_id):
