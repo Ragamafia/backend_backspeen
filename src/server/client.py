@@ -7,12 +7,12 @@ from config import cfg
 
 class Client:
     headers: dict
-    access_token: str | None = None
 
     def __init__(self):
         self.session = aiohttp.ClientSession()
+        self.headers = cfg.headers
 
-    async def create(self, name, last_name, email, password):
+    async def _create(self, name, last_name, email, password):
         data = {
             "name": name,
             "last_name": last_name,
@@ -21,15 +21,19 @@ class Client:
         }
         await self.post("register", json=data)
 
-    async def login(self, email, password):
+    async def _login(self, email, password):
         data = {
             "email": email,
             "password": password
         }
-        await self.post("login", json=data)
+        resp = await self.post("login", json=data)
+        if token := resp["access_token"]:
+            self.access_token = token
+            self.headers["Authorization"] = f"Bearer {token}"
+            return resp
 
-    async def session(self):
-        await self.get("protected")
+    async def _get_user(self, data):
+        return await self.post("users/me", json=data)
 
 
     async def get(self, path: str, **kwargs):
@@ -42,6 +46,7 @@ class Client:
         kwargs = dict(
             method=method,
             url=f"{cfg.BASE_URL}/{path}",
+            headers=self.headers,
             **kwargs
         )
         try:
