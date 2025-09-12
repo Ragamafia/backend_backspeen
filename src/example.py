@@ -17,6 +17,7 @@ async def main():
     user_client = Client()
     admin_client = Client()
 
+    # step 1: create user
     resp = await user_client.create(
         name=FIRST_NAME,
         last_name=LAST_NAME,
@@ -28,36 +29,38 @@ async def main():
     else:
         raise AssertionError("Can not create user")
 
-
+    # step 2: login user
     if user_resp := await user_client.login(email=EMAIL, password=PASSWORD):
         if user_resp["success"] == True and user_resp["data"]["access_token"]:
             logger.success(f"Authenticate USER successfully")
     else:
         raise AssertionError("Can not auth user")
 
-    print(user_resp)
+    # step 3: get user from database
     if user := await user_client.get_user(user_resp):
         print(f"User recived: {user}")
     else:
         raise AssertionError("Can not get user")
 
-    print(user_resp)
+    # step 4: login admin
     if admin_resp := await admin_client.login(email=ADMIN_EMAIL, password=ADMIN_PASSWORD):
         if admin_resp["success"] == True and admin_resp["data"]["access_token"]:
             logger.success(f"Authenticate ADMIN successfully")
     else:
         raise AssertionError("Can not auth admin")
 
-
-    if updated_user := await admin_client.update_role(user, "user"):
+    # step 5: update user role
+    if updated_user := await admin_client.update_role(user, "user"):   # change role (moderator / user)
         print(f"User updated: {updated_user}")
     else:
         raise AssertionError("Can not update user")
-    print(user_resp)
-    new_data = await user_client.get_user(user_resp)
-    print(f"User new data: {new_data}")
 
-
+    # step 6: logout user
+    if user_logout := await user_client.logout(user_resp):
+        if user_logout["success"] == False:
+            print(f"User logout: {user_logout}")
+        else:
+            raise AssertionError("Can not logout user")
 
 
     await user_client.close()
@@ -65,23 +68,3 @@ async def main():
 
 
 asyncio.run(main())
-
-#     async def delete_user(self, admin_session, user_id):
-#         pass  # remove user
-#
-#     async def try_login_deleted_user(self):
-#         pass  # attempt login, expect failure
-#
-#     async def make_request(self, session, endpoint, payload=None):
-#         pass  # generic request function
-
-
-#     # # step 6: get updated user data
-#     # get_user_data(user_session)
-#     #
-#     # # step 7: admin deletes user
-#     # delete_user(admin_session, user_id=1)
-#     #
-#     # # step 8: check deleted user cannot login
-#     # try_login_deleted_user()
-#

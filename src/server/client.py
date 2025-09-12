@@ -10,7 +10,7 @@ class Client:
 
     def __init__(self):
         self.session = aiohttp.ClientSession()
-        self.headers = cfg.headers
+        self.headers = cfg.headers.copy()
 
     async def create(self, name, last_name, email, password):
         data = {
@@ -34,6 +34,13 @@ class Client:
         else:
             return None
 
+    async def logout(self, resp):
+        data = {
+            "access_token": resp["data"]["access_token"],
+            "token_type": resp["data"]["token_type"]
+        }
+        return await self.post("api/users/logout", json=data)
+
     async def get_user(self, resp):
         data = {
             "access_token": resp["data"]["access_token"],
@@ -47,6 +54,12 @@ class Client:
             "role": role
         }
         return await self.post("api/admin/change-role", json=data)
+
+    async def delete(self, user):
+        data = {
+            "user_id": user.get("id")
+        }
+        return await self.post("api/admin/delete", json=data)
 
 
     async def get(self, path: str, **kwargs):

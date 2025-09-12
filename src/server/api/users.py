@@ -1,7 +1,14 @@
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Depends
 
 from src.server.utils import create_token, decode
-from src.server.api.models import NewUserRequest, LoginRequest, LoginResponse, AuthorizeRequest, AuthorizeResponse
+from src.server.api.models import (User,
+                                   NewUserRequest,
+                                   LoginRequest,
+                                   LoginResponse,
+                                   LogoutRequest,
+                                   LogoutResponse,
+                                   AuthorizeRequest,
+                                   AuthorizeResponse)
 from src.logger import logger
 
 
@@ -10,6 +17,13 @@ def register_users_router(app):
         tags=["Users"],
         prefix="/api/users"
     )
+    async def is_authorize(request: Request):
+        token = decode(request)
+        if isinstance(token, dict):
+            if user := await app.db.get_user(token.get("user_id")):
+                return user
+
+        raise HTTPException(status_code=401, detail="Bad token")
 
     @users_router.post("/register")
     async def create_user(request: NewUserRequest):
@@ -20,6 +34,10 @@ def register_users_router(app):
             user = await app.db.create(request.name, request.last_name, request.email, request.password)
             logger.info(f"User {request.email} created")
             return user
+
+    @users_router.post("/me")
+    async def auth(user: User = Depends(is_authorize)):
+        return user
 
     @users_router.post("/login")
     async def login(request: LoginRequest):
@@ -32,14 +50,10 @@ def register_users_router(app):
             logger.warning(f"User {request.email} not found")
             return LoginResponse(success=False, data={})
 
-    @users_router.post("/me")
-    async def is_authorize(request: Request):
-        token = decode(request)
-        if isinstance(token, dict):
-            if user := await app.db.get_user(token.get("user_id")):
-                return user
-
-        raise HTTPException(status_code=401, detail="Bad token")
+    @users_router.post("/logout")
+    async def logout(request: dict, user: User = Depends(is_authorize)):
+        if user:
+            return LogoutResponse(success=False, data=request)
 
 
     app.app.include_router(users_router)

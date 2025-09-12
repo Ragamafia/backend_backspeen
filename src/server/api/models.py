@@ -27,7 +27,15 @@ class LoginRequest(BaseModel):
     email: str
     password: str
 
+class LogoutRequest(BaseModel):
+    token: dict
+
 class LoginResponse(BaseModel):
+    success: bool
+    data: dict
+
+
+class LogoutResponse(BaseModel):
     success: bool
     data: dict
 
@@ -45,3 +53,6 @@ class TokenRequest(BaseModel):
 class ChangeRoleRequest(BaseModel):
     user_id: int
     role: Role
+
+class DeleteUserRequest(BaseModel):
+    user_id: int

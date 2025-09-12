@@ -40,4 +40,4 @@ class DataBaseController(BaseDB):
     @BaseDB.db_connect
     async def delete(self, user_id):
         if user := await self.db.filter(id=user_id).first():
-            await user.delete()
+            return await user.delete()

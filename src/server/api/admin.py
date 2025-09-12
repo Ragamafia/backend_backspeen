@@ -1,7 +1,7 @@
 from fastapi import Request, APIRouter, Depends, HTTPException
 
 from src.server.utils import decode
-from src.server.api.models import User, ChangeRoleRequest
+from src.server.api.models import User, ChangeRoleRequest, DeleteUserRequest
 
 
 def register_admin_router(app):
@@ -24,5 +24,9 @@ def register_admin_router(app):
         if admin:
             return await app.db.update(request.user_id, request.role)
 
+    @admin_router.post("/delete")
+    async def delete_user(request: DeleteUserRequest, admin: User = Depends(is_admin)):
+        if admin:
+            return await app.db.delete(request.user_id)
 
     app.app.include_router(admin_router)
