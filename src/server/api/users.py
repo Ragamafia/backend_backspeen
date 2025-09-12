@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Request, HTTPException
 
-from src.server.utils import create_token, verify_token
+from src.server.utils import create_token, decode
+from src.server.api.models import NewUserRequest, LoginRequest, LoginResponse, AuthorizeRequest, AuthorizeResponse
 from src.logger import logger
-from src.server.api.requests import NewUserRequest, NewUserResponse, LoginRequest, TokenRequest
+
 
 def register_users_router(app):
     users_router = APIRouter(
@@ -12,30 +13,33 @@ def register_users_router(app):
 
     @users_router.post("/register")
     async def create_user(request: NewUserRequest):
-        if user := await app.db.get_user(request.email):
+        if user := await app.db.read(request.email, request.password):
             logger.warning(f"User {user.name} already exists")
+            return user
         else:
-            await app.db.create(request.name, request.last_name, request.email, request.password)
+            user = await app.db.create(request.name, request.last_name, request.email, request.password)
+            logger.info(f"User {request.email} created")
+            return user
 
     @users_router.post("/login")
     async def login(request: LoginRequest):
         if user := await app.db.read(request.email, request.password):
             token = create_token(user.id)
-            user.is_active = True
-            await user.save()
-
-            logger.success(f"User {request.email} logged in")
-            return {"access_token": token, "token_type": "bearer"}
+            data = {"access_token": token, "token_type": "bearer"}
+            logger.success(f"User {user.email} logged in")
+            return LoginResponse(success=True, data=data)
         else:
-            logger.warning(f"User not found")
-            return NewUserResponse(success=False, result=None)
+            logger.warning(f"User {request.email} not found")
+            return LoginResponse(success=False, data={})
 
     @users_router.post("/me")
-    async def get_user(request: TokenRequest):
-        if request is None:
-            raise HTTPException(status_code=401, detail="Token missing")
-        user_id = verify_token(request)
-        return await app.db.get_user_by_id(user_id)
+    async def is_authorize(request: Request):
+        token = decode(request)
+        if isinstance(token, dict):
+            if user := await app.db.get_user(token.get("user_id")):
+                return user
+
+        raise HTTPException(status_code=401, detail="Bad token")
 
 
     app.app.include_router(users_router)

@@ -19,7 +19,7 @@ class Client:
             "email": email,
             "password": password
         }
-        await self.post("api/users/register", json=data)
+        return await self.post("api/users/register", json=data)
 
     async def login(self, email, password):
         data = {
@@ -27,13 +27,26 @@ class Client:
             "password": password
         }
         resp = await self.post("api/users/login", json=data)
-        if token := resp["access_token"]:
-            self.access_token = token
-            self.headers["Authorization"] = f"Bearer {token}"
-            return resp
+        if resp["success"] == True:
+            if token := resp["data"]["access_token"]:
+                self.headers["Authorization"] = f"Bearer {token}"
+                return resp
+        else:
+            return None
 
-    async def get_user(self, data):
+    async def get_user(self, resp):
+        data = {
+            "access_token": resp["data"]["access_token"],
+            "token_type": resp["data"]["token_type"]
+        }
         return await self.post("api/users/me", json=data)
+
+    async def update_role(self, user, role):
+        data = {
+            "user_id": user.get("id"),
+            "role": role
+        }
+        return await self.post("api/admin/change-role", json=data)
 
 
     async def get(self, path: str, **kwargs):
@@ -41,6 +54,9 @@ class Client:
 
     async def post(self, path: str, **kwargs):
         return await self._request("POST", path, **kwargs)
+
+    async def close(self):
+        await self.session.close()
 
     async def _request(self, method: str, path: str, **kwargs):
         kwargs = dict(
@@ -63,5 +79,6 @@ class Client:
 
                 elif response.status >= 400:
                     return "No access"
-        finally:
-            await self.session.close()
+
+        except Exception as e:
+            print(f"[{method}] {path} -> {e}")

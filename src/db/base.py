@@ -2,7 +2,14 @@ from functools import wraps
 
 from tortoise import Tortoise
 
+from src.db.table import UserDBModel
 from config import cfg
+
+
+ADMIN_NAME = "Admin"
+ADMIN_LAST_NAME = "Admin"
+ADMIN_EMAIL = "admin@admin.com"
+ADMIN_PASSWORD = "654321"
 
 
 def db_connect(func):
@@ -34,4 +41,18 @@ class BaseDB:
             modules={'models': ['src.db.table']}
         )
         await Tortoise.generate_schemas()
+        await self.ensure_admins()
+
         BaseDB.inited = True
+
+    async def ensure_admins(self):
+        if await UserDBModel.filter(email=ADMIN_EMAIL).exists():
+            return
+        else:
+            await UserDBModel.create(
+                name=ADMIN_NAME,
+                last_name=ADMIN_LAST_NAME,
+                email=ADMIN_EMAIL,
+                password=ADMIN_PASSWORD,
+                role="admin"
+            )
