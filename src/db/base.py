@@ -54,5 +54,6 @@ class BaseDB:
                 last_name=ADMIN_LAST_NAME,
                 email=ADMIN_EMAIL,
                 password=ADMIN_PASSWORD,
-                role="admin"
+                role="admin",
+                is_active=True
             )

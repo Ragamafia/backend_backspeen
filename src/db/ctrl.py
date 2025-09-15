@@ -22,7 +22,8 @@ class DataBaseController(BaseDB):
                 last_name=last_name,
                 email=email,
                 password=password,
-                role="user"
+                role="user",
+                is_active=True
             )
             return User.model_validate(user)
 
@@ -38,6 +39,23 @@ class DataBaseController(BaseDB):
             return user
 
     @BaseDB.db_connect
+    async def to_ban(self, user_id):
+        if user := await self.db.filter(id=user_id).first():
+            user.is_active = False
+            await user.save()
+            return user
+
+    @BaseDB.db_connect
+    async def unblock(self, user_id):
+        if user := await self.db.filter(id=user_id).first():
+            user.is_active = True
+            await user.save()
+            return user
+
+    @BaseDB.db_connect
     async def delete(self, user_id):
         if user := await self.db.filter(id=user_id).first():
             return await user.delete()
+
+
+db = DataBaseController()

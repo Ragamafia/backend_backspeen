@@ -1,7 +1,8 @@
-from fastapi import Request, APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
-from src.server.utils import decode
-from src.server.api.models import User, ChangeRoleRequest, DeleteUserRequest
+from src.server.utils import is_admin
+from src.server.api.models import User, ChangeRoleRequest
+from logger import logger
 
 
 def register_admin_router(app):
@@ -10,23 +11,23 @@ def register_admin_router(app):
         prefix="/api/admin"
     )
 
-    async def is_admin(request: Request):
-        token = decode(request)
-        if isinstance(token, dict):
-            if user := await app.db.get_user(token.get("user_id")):
-                if user.role == "admin":
-                    return user
-
-        raise HTTPException(status_code=401, detail="Bad token")
-
     @admin_router.post("/change-role")
     async def change_role(request: ChangeRoleRequest, admin: User = Depends(is_admin)):
         if admin:
+            logger.info(f"Change role. User ID: {request.user_id}. Role: {request.role}")
             return await app.db.update(request.user_id, request.role)
 
-    @admin_router.post("/delete")
-    async def delete_user(request: DeleteUserRequest, admin: User = Depends(is_admin)):
+    @admin_router.get("/unblock/{user_id}")
+    async def unblock(user_id: int, admin: User = Depends(is_admin)):
         if admin:
-            return await app.db.delete(request.user_id)
+            logger.info(f"Unblock user. ID: {user_id}")
+            return await app.db.unblock(user_id)
+
+    @admin_router.delete("/{user_id}")
+    async def delete_user(user_id: int, admin: User = Depends(is_admin)):
+        if admin:
+            logger.info(f"Delete user. ID: {user_id}")
+            return f"Delete user: {user_id}"
+            #return app.db.delete(user_id)
 
     app.app.include_router(admin_router)
