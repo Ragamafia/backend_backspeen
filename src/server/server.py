@@ -6,6 +6,7 @@ from db.ctrl import DataBaseController
 from src.server.api.users import register_users_router
 from src.server.api.admin import register_admin_router
 
+
 class Server:
     app: FastAPI
     db: DataBaseController
@@ -13,6 +14,7 @@ class Server:
     def __init__(self):
         self.app = FastAPI()
         self.db = DataBaseController()
+        self.app.state.db = self.db
 
     def run(self):
         register_users_router(self)

@@ -1,10 +1,15 @@
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 
-from src.models import User
+from src.models import User, Role
 from src.server.utils import is_admin
-from src.server.api.models import ChangeRoleRequest
 
 from logger import logger
+
+
+class ChangeRoleRequest(BaseModel):
+    user_id: int
+    role: Role
 
 
 def register_admin_router(app):

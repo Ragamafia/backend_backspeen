@@ -4,3 +4,5 @@ fastapi
 uvicorn[standart]
 pydantic
 pyjwt
+email-validator
+loguru

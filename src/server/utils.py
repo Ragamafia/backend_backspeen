@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 
 from fastapi import Request, HTTPException, Depends
 
-from src.db.ctrl import db
 from config import cfg
 
 
@@ -29,6 +28,7 @@ def decode(request: Request):
 
 async def is_authorize(request: Request):
     token = decode(request)
+    db = request.app.state.db
     if isinstance(token, dict):
         if user := await db.get_user_by_id(token.get("user_id")):
             return user

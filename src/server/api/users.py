@@ -15,6 +15,7 @@ def register_users_router(app):
 
     @users_router.post("/register")
     async def create_user(request: NewUserRequest):
+        print(request.model_dump())
         return await app.db.ensure_user(request.model_dump())
 
     @users_router.post("/login")

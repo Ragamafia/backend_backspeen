@@ -1,8 +1,25 @@
 from typing import Literal
-from pydantic import BaseModel
+
+from pydantic import BaseModel, field_validator, Secret, EmailStr
 
 
 Role = Literal["admin", "user", "moderator"]
+
+
+class NewUserRequest(BaseModel):
+    name: str
+    last_name: str
+    email: EmailStr
+    password: Secret[str]
+
+    @field_validator("email", mode="before")
+    def normalize_email(cls, v):
+        return v.lower()
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
 
 class Response(BaseModel):
@@ -13,34 +30,13 @@ class Response(BaseModel):
 
 class Ok(Response):
     success: bool = True
-    data: dict
     error: str | None = None
-
-
-class NoAccess(Response):
-    success: bool = False
-    data: dict | None = None
-    error: str = "Access denied"
 
 
 class Error(Response):
     success: bool = False
     data: dict | None = None
-    error: str
 
 
-class NewUserRequest(BaseModel):
-    name: str
-    last_name: str
-    email: str
-    password: str
-
-
-class LoginRequest(BaseModel):
-    email: str
-    password: str
-
-
-class ChangeRoleRequest(BaseModel):
-    user_id: int
-    role: Role
+class NoAccess(Error):
+    error: str = "Access denied"

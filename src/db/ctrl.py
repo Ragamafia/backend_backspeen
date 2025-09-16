@@ -12,6 +12,8 @@ class DataBaseController(BaseDB):
     db: Type[Model] = UserDBModel
 
     async def ensure_user(self, user: dict):
+        real_dict = user
+        real_dict['password'] = user["password"].get_secret_value()
         try:
             return await self.db.create(**user)
         except IntegrityError:
@@ -32,5 +34,3 @@ class DataBaseController(BaseDB):
     async def update(self, user_id: str, **kwargs):
         await self.db.filter(id=user_id).update(**kwargs)
         return await self.db.filter(id=user_id).first()
-
-db = DataBaseController()
