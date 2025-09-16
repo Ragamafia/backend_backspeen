@@ -6,12 +6,6 @@ from src.db.table import UserDBModel
 from config import cfg
 
 
-ADMIN_NAME = "Admin"
-ADMIN_LAST_NAME = "Admin"
-ADMIN_EMAIL = "admin@admin.com"
-ADMIN_PASSWORD = "654321"
-
-
 def db_connect(func):
     @wraps(func)
     async def wrapper(self, *args, **kwargs):
@@ -46,14 +40,13 @@ class BaseDB:
         BaseDB.inited = True
 
     async def ensure_admins(self):
-        if await UserDBModel.filter(email=ADMIN_EMAIL).exists():
+        if await UserDBModel.filter(email=cfg.admin_email).exists():
             return
         else:
             await UserDBModel.create(
-                name=ADMIN_NAME,
-                last_name=ADMIN_LAST_NAME,
-                email=ADMIN_EMAIL,
-                password=ADMIN_PASSWORD,
+                name=cfg.admin_name,
+                last_name=cfg.admin_last_name,
+                email=cfg.admin_email,
+                password=cfg.admin_password,
                 role="admin",
-                is_active=True
             )

@@ -8,5 +8,5 @@ class UserDBModel(models.Model):
     email = fields.CharField(max_length=50, unique=True)
     password = fields.CharField(max_length=50)
 
-    is_active = fields.BooleanField(default=False)
-    role = fields.CharField(max_length=12)
+    is_active = fields.BooleanField(default=True)
+    role = fields.CharField(max_length=12, default="user")

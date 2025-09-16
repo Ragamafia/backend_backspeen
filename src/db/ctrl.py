@@ -1,61 +1,42 @@
 from typing import Type
 
 from tortoise.models import Model
+from tortoise.exceptions import IntegrityError
 
 from src.db.base import BaseDB
 from src.db.table import UserDBModel
-from src.server.api.models import User
+from loguru import logger
 
 
 class DataBaseController(BaseDB):
     db: Type[Model] = UserDBModel
 
     @BaseDB.db_connect
-    async def get_user(self, user_id):
-        return await self.db.filter(id=user_id).first()
+    async def ensure_user(self, user: dict):
+        try:
+            return await self.db.create(**user)
+        except IntegrityError:
+            logger.warning(f"User already exists")
+            return await self.get_by_email(user["email"])
+        except Exception as e:
+            logger.error(f"Error while getting user {e}")
 
     @BaseDB.db_connect
-    async def create(self, name, last_name, email, password):
-        if not await self.db.filter(email=email).exists():
-            user = await self.db.create(
-                name=name,
-                last_name=last_name,
-                email=email,
-                password=password,
-                role="user",
-                is_active=True
-            )
-            return User.model_validate(user)
-
-    @BaseDB.db_connect
-    async def read(self, email, password):
+    async def get_user(self, email, password):
         return await self.db.filter(email=email, password=password).first()
 
     @BaseDB.db_connect
-    async def update(self, user_id, role):
-        if user := await self.db.filter(id=user_id).first():
-            user.role = role
-            await user.save()
-            return user
+    async def get_user_by_id(self, user_id):
+        return await self.db.filter(id=user_id).first()
 
     @BaseDB.db_connect
-    async def to_ban(self, user_id):
-        if user := await self.db.filter(id=user_id).first():
-            user.is_active = False
-            await user.save()
-            return user
+    async def get_by_email(self, email):
+        return await self.db.filter(email=email).first()
 
     @BaseDB.db_connect
-    async def unblock(self, user_id):
-        if user := await self.db.filter(id=user_id).first():
-            user.is_active = True
-            await user.save()
-            return user
-
-    @BaseDB.db_connect
-    async def delete(self, user_id):
-        if user := await self.db.filter(id=user_id).first():
-            return await user.delete()
+    async def update(self, user_id: str, **kwargs):
+        await self.db.filter(id=user_id).update(**kwargs)
+        return await self.db.filter(id=user_id).first()
 
 
 db = DataBaseController()
