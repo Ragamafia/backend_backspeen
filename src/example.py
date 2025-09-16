@@ -56,7 +56,6 @@ async def main(user_data: dict):
     # step 6: logout user
     user_logout = await user_client.logout()
     if user_logout["success"] == False:
-        #user_client.headers.pop("Authorization")
         logger.debug(f"User logout (USER)")
     else:
         raise AssertionError("Can not logout user")

@@ -1,7 +1,7 @@
 import jwt
 from datetime import datetime, timedelta
 
-from fastapi import Request, HTTPException
+from fastapi import Request, HTTPException, Depends
 
 from src.db.ctrl import db
 from config import cfg
@@ -32,14 +32,9 @@ async def is_authorize(request: Request):
     if isinstance(token, dict):
         if user := await db.get_user_by_id(token.get("user_id")):
             return user
-
     raise HTTPException(status_code=401, detail="Bad token")
 
-async def is_admin(request: Request):
-    token = decode(request)
-    if isinstance(token, dict):
-        if user := await db.get_user_by_id(token.get("user_id")):
-            if user.role == "admin":
-                return user
-
-    raise HTTPException(status_code=401, detail="Bad token")
+async def is_admin(user=Depends(is_authorize)):
+    if user.role == "admin":
+        return user
+    raise HTTPException(status_code=401, detail="Not admin")

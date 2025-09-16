@@ -15,7 +15,7 @@ def register_admin_router(app):
 
     @admin_router.post("/change-role")
     async def change_role(request: ChangeRoleRequest, admin: User = Depends(is_admin)):
-        if admin.role == "admin":
+        if admin:
             logger.info(f"Change role. User ID: {request.user_id}. Role: {request.role}")
             return await app.db.update(request.user_id, role=request.role)
 

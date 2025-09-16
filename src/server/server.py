@@ -18,6 +18,10 @@ class Server:
         register_users_router(self)
         register_admin_router(self)
 
+        @self.app.on_event("startup")
+        async def startup():
+            await self.db.setup_db()
+
         uvicorn.run(
             self.app,
             host=cfg.host,
