@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends
+import uuid
+from fastapi import APIRouter, Depends, Request
 
 from src.models import User
-from src.server.utils import create_token, is_authorize
+from src.server.utils import create_token, is_authorize, decode
 from src.server.api.models import NewUserRequest, LoginRequest, Ok, NoAccess, Error
 
 from logger import logger
@@ -15,16 +16,18 @@ def register_users_router(app):
 
     @users_router.post("/register")
     async def create_user(request: NewUserRequest):
-        print(request.model_dump())
         return await app.db.ensure_user(request.model_dump())
 
     @users_router.post("/login")
     async def login(request: LoginRequest):
         if user := await app.db.get_user(request.email, request.password):
             if user.is_active:
-                token = create_token(user.id)
+                session_id = str(uuid.uuid4())
+                token = create_token(user.id, session_id)
                 data = {"access_token": token, "token_type": "bearer"}
                 logger.success(f"User {user.name} {user.last_name} logged in")
+
+                await app.db.create_session(user.id, session_id)
                 return Ok(data=data)
             else:
                 return NoAccess()
@@ -32,23 +35,22 @@ def register_users_router(app):
             return Error(error="User not found")
 
     @users_router.get("/logout")
-    async def logout(user: User = Depends(is_authorize)):
-        if user:
-            logger.debug(f"User {user.name} {user.last_name} logged out")
-            return NoAccess()
+    async def logout(request: Request):
+        decoded = decode(request)
+        await app.db.kill_session(decoded.get("session_id"))
+        logger.debug(f"Logged out")
+        return NoAccess()
 
     @users_router.post("/me")
     async def auth(user: User = Depends(is_authorize)):
-        if user:
-            logger.info(f"Get user: {user.name} {user.last_name}")
-            return user
+        logger.info(f"Get user: {user.name} {user.last_name}")
+        return user
 
     @users_router.delete("/")
     async def delete(user: User = Depends(is_authorize)):
-        if user:
-            await app.db.update(user.id, is_active=False)
-            logger.warning(f"User {user.name} {user.last_name} soft removed")
-            return NoAccess()
+        await app.db.update(user.id, is_active=False)
+        logger.warning(f"User {user.name} {user.last_name} soft removed")
+        return NoAccess()
 
 
     app.app.include_router(users_router)

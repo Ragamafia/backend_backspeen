@@ -10,3 +10,8 @@ class UserDBModel(models.Model):
 
     is_active = fields.BooleanField(default=True)
     role = fields.CharField(max_length=12, default="user")
+
+
+class SessionDBModel(models.Model):
+    user_id = fields.IntField()
+    session_id = fields.CharField(max_length=50, unique=True)

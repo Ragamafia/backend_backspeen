@@ -21,7 +21,7 @@ async def main(user_data: dict):
     # step 1: create user
     resp = await user_client.create_user(user_data)
     if resp:
-        logger.info(f"User created: {resp}")
+        logger.info(f"User created: {resp.get('name')} {resp.get('last_name')}")
     else:
         raise AssertionError("Can not create user")
 
@@ -40,7 +40,6 @@ async def main(user_data: dict):
 
     # step 4: login admin
     admin_resp = await admin_client.login(email=cfg.admin_email, password=cfg.admin_password)
-
     if admin_resp["success"] == True and admin_resp["data"]["access_token"]:
         logger.success(f"Authenticated successfully (ADMIN)")
     else:
@@ -56,7 +55,7 @@ async def main(user_data: dict):
     # step 6: logout user
     user_logout = await user_client.logout()
     if user_logout["success"] == False:
-        logger.debug(f"User logout (USER)")
+        logger.debug(f"User logout")
     else:
         raise AssertionError("Can not logout user")
 

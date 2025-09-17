@@ -19,5 +19,9 @@ class Config:
         "Authorization": ""
     }
 
+    def __init__(self):
+        super().__init__()
+        self.sql_lite_db_path.parent.mkdir(parents=True, exist_ok=True)
+
 
 cfg = Config()
