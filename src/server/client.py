@@ -40,7 +40,7 @@ class Client:
 
     async def change_role(self, user, role):
         data = {
-            "user_id": user.get("id"),
+            "user_id": user.get("user_id"),
             "role": role
         }
         return await self.post("api/admin/change-role", json=data)
@@ -50,6 +50,13 @@ class Client:
 
     async def unblock_user(self, user_id):
         return await self.update(f"api/admin/unblock/{user_id}")
+
+    async def edit_user(self, new_name, new_last_name):
+        data = {
+            "name": new_name,
+            "last_name": new_last_name
+        }
+        return await self.post(f"api/users/edit", json=data)
 
 
     async def get(self, path: str, **kwargs):

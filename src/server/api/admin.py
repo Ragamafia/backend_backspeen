@@ -8,7 +8,7 @@ from logger import logger
 
 
 class ChangeRoleRequest(BaseModel):
-    user_id: int
+    user_id: str
     role: Role
 
 
@@ -24,7 +24,7 @@ def register_admin_router(app):
         return await app.db.update(request.user_id, role=request.role)
 
     @admin_router.put("/unblock/{user_id}")
-    async def unblock_user(user_id: int, admin: User = Depends(is_admin)):
+    async def unblock_user(user_id: str, admin: User = Depends(is_admin)):
         logger.info(f"Unblock user. ID: {user_id}")
         return await app.db.update(user_id, is_active=True)
 

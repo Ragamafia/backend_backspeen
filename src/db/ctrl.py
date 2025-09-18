@@ -28,14 +28,14 @@ class DataBaseController(BaseDB):
         return await self.db.filter(email=email, password=password).first()
 
     async def get_user_by_id(self, user_id):
-        return await self.db.filter(id=user_id).first()
+        return await self.db.filter(user_id=user_id).first()
 
     async def get_by_email(self, email):
         return await self.db.filter(email=email).first()
 
     async def update(self, user_id: str, **kwargs):
-        await self.db.filter(id=user_id).update(**kwargs)
-        return await self.db.filter(id=user_id).first()
+        await self.db.filter(user_id=user_id).update(**kwargs)
+        return await self.db.filter(user_id=user_id).first()
 
 
     async def create_session(self, user_id, session_id):

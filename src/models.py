@@ -6,6 +6,7 @@ Role = Literal["admin", "user", "moderator"]
 
 
 class User(BaseModel):
+    user_id: str
     name: str
     last_name: str
     email: str

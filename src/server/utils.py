@@ -6,10 +6,10 @@ from fastapi import Request, HTTPException, Depends
 from config import cfg
 
 
-def create_token(user_id: int, session_id: str):
+def create_token(user_id: str, session_id: str):
     expire = datetime.utcnow() + timedelta(hours=1)
     to_encode = {
-        "user_id": user_id,
+        "user_id": str(user_id),
         "exp": expire,
         "session_id": session_id,
     }
@@ -36,7 +36,7 @@ async def is_authorize(request: Request):
     if isinstance(token, dict):
         if user := await db.get_user_by_id(token.get("user_id")):
             try:
-                if await db.validate_session(user.id, token.get("session_id")):
+                if await db.validate_session(user.user_id, token.get("session_id")):
                     return user
             except:
                 raise HTTPException(status_code=401, detail="No session ID")

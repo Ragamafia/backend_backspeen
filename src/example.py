@@ -80,25 +80,30 @@ async def main(user_data: dict):
         raise AssertionError("Can not soft remove user")
 
     # step 10: try deleted user login
-    banned_user = await user_client.login(email=user_data.get("email"), password=user_data.get("password"))
-    if banned_user["success"]:
+    deleted_user_resp = await user_client.login(email=user_data.get("email"), password=user_data.get("password"))
+    if deleted_user_resp["success"]:
         logger.success(f"Successfully again!")
     else:
         logger.error(f"Can not login user")
 
     # step 11: unlock user
-    if unblock_user := await admin_client.unblock_user(user.get("id")):
+    if unblock_user := await admin_client.unblock_user(user.get("user_id")):
         logger.success(f"User unblock: {unblock_user['name']} {unblock_user['last_name']}")
     else:
         raise AssertionError("Can not unban user")
 
     # step 12: try deleted user login again
-    user = await user_client.login(email=user_data.get("email"), password=user_data.get("password"))
-    if user["success"]:
+    user_resp = await user_client.login(email=user_data.get("email"), password=user_data.get("password"))
+    if user_resp["success"]:
         logger.success(f"Successfully again!")
     else:
         logger.error(f"Can not login user")
 
+    # step 13: edit user
+    if updated_user := await user_client.edit_user(new_name="Jack", new_last_name="Sparrow"):
+        logger.info(f"User {user["name"]} {user["last_name"]} updated. New name: {updated_user['name']} {updated_user['last_name']}")
+    else:
+        raise AssertionError("Can not update user")
 
     await user_client.close()
     await admin_client.close()

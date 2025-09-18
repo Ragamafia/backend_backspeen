@@ -40,3 +40,8 @@ class Error(Response):
 
 class NoAccess(Error):
     error: str = "Access denied"
+
+
+class EditUserRequest(BaseModel):
+    name: str
+    last_name: str

@@ -1,8 +1,10 @@
+import uuid
+
 from tortoise import fields, models
 
 
 class UserDBModel(models.Model):
-    id = fields.IntField(pk=True)
+    user_id = fields.UUIDField(default=uuid.uuid4, unique=True)
     name = fields.CharField(max_length=50)
     last_name = fields.CharField(max_length=50)
     email = fields.CharField(max_length=50, unique=True)
@@ -13,5 +15,5 @@ class UserDBModel(models.Model):
 
 
 class SessionDBModel(models.Model):
-    user_id = fields.IntField()
+    user_id = fields.CharField(max_length=50)
     session_id = fields.CharField(max_length=50, unique=True)
