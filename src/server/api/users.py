@@ -1,8 +1,8 @@
 import uuid
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 
 from src.models import User
-from src.server.utils import create_token, is_authorize, decode
+from src.server.utils import create_token, is_authorize
 from src.server.api.models import NewUserRequest, LoginRequest, Ok, NoAccess, Error
 
 from logger import logger
@@ -35,21 +35,24 @@ def register_users_router(app):
             return Error(error="User not found")
 
     @users_router.get("/logout")
-    async def logout(request: Request):
-        decoded = decode(request)
-        await app.db.kill_session(decoded.get("session_id"))
-        logger.debug(f"Logged out")
+    async def logout(user: User = Depends(is_authorize)):
+        await app.db.kill_session(user.id)
+        logger.debug(f"User ID - {user.id} logged out")
         return NoAccess()
 
     @users_router.post("/me")
     async def auth(user: User = Depends(is_authorize)):
-        logger.info(f"Get user: {user.name} {user.last_name}")
-        return user
+        if user:
+            logger.info(f"Get user: {user.name} {user.last_name}")
+            return user
+        else:
+            return NoAccess()
 
     @users_router.delete("/")
     async def delete(user: User = Depends(is_authorize)):
         await app.db.update(user.id, is_active=False)
-        logger.warning(f"User {user.name} {user.last_name} soft removed")
+        await app.db.kill_session(user.id)
+        logger.warning(f"User {user.name} {user.last_name} removed")
         return NoAccess()
 
 

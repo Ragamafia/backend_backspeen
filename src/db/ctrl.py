@@ -42,11 +42,7 @@ class DataBaseController(BaseDB):
         return await self.session_db.create(user_id=user_id, session_id=session_id)
 
     async def validate_session(self, user_id, session_id):
-        if await self.session_db.filter(user_id=user_id, session_id=session_id).exists():
-            return True
+        return await self.session_db.filter(user_id=user_id, session_id=session_id).exists()
 
-    async def get_session_id(self, user_id):
-        return await self.session_db.filter(user_id=user_id).first()
-
-    async def kill_session(self, session_id):
-        return await self.session_db.filter(session_id=session_id).delete()
+    async def kill_session(self, user_id):
+        return await self.session_db.filter(user_id=user_id).delete()

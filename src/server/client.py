@@ -22,15 +22,14 @@ class Client:
             "password": password
         }
         resp = await self.post("api/users/login", json=data)
-        if resp["success"] == True:
-            if token := resp["data"]["access_token"]:
-                self.headers["Authorization"] = f"Bearer {token}"
-                return resp
+        if resp["success"]:
+            self.headers["Authorization"] = f"Bearer {resp["data"]["access_token"]}"
+            return resp
         else:
             return resp
 
     async def logout(self):
-        return await self.get("api/users/logout")
+        return await self.get(f"api/users/logout")
 
     async def get_user(self, resp):
         data = {
@@ -46,7 +45,7 @@ class Client:
         }
         return await self.post("api/admin/change-role", json=data)
 
-    async def soft_remove(self):
+    async def remove_user(self):
         return await self.delete(f"api/users/")
 
     async def unblock_user(self, user_id):

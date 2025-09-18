@@ -27,7 +27,7 @@ async def main(user_data: dict):
 
     # step 2: login user
     user_resp = await user_client.login(email=user_data["email"], password=user_data["password"])
-    if user_resp["success"] == True and user_resp["data"]["access_token"]:
+    if user_resp["success"]:
         logger.success(f"Authenticated successfully (USER)")
     else:
         raise AssertionError("Can not auth user")
@@ -40,7 +40,7 @@ async def main(user_data: dict):
 
     # step 4: login admin
     admin_resp = await admin_client.login(email=cfg.admin_email, password=cfg.admin_password)
-    if admin_resp["success"] == True and admin_resp["data"]["access_token"]:
+    if admin_resp["success"]:
         logger.success(f"Authenticated successfully (ADMIN)")
     else:
         raise AssertionError("Can not auth admin")
@@ -48,35 +48,56 @@ async def main(user_data: dict):
     # step 5: update user role
     new_role = "moderator"
     if updated_user := await admin_client.change_role(user, new_role):  # change (moderator/user)
-        logger.debug(f"User update to {new_role}: {updated_user['name']} {updated_user['last_name']}")
+        logger.debug(f"Update to {new_role}: {updated_user['name']} {updated_user['last_name']}")
     else:
         raise AssertionError("Can not update user")
 
     # step 6: logout user
     user_logout = await user_client.logout()
-    if user_logout["success"] == False:
+    if not user_logout["success"]:
         logger.debug(f"User logout")
     else:
         raise AssertionError("Can not logout user")
 
-    # step 7: soft remove user
-    if removed_user := await user_client.soft_remove():
-        logger.debug(f"User {user['name']} {user['last_name']} - {removed_user}")
+    # step 7: try getting info as a logged out user
+    logged_out_user = await user_client.get_user(user_resp)
+    try:
+        logger.info(f"User recived: {logged_out_user['name']} {logged_out_user['last_name']}")
+    except:
+        logger.error(f"Response: {logged_out_user}")
+
+    # step 8: login user again
+    user_resp = await user_client.login(email=user_data["email"], password=user_data["password"])
+    if user_resp["success"]:
+        logger.success(f"Authenticated successfully (USER)")
+    else:
+        raise AssertionError("Can not auth user")
+
+    # step 9: soft remove user
+    if removed_user := await user_client.remove_user():
+        logger.debug(f"User deleted: {removed_user}")
     else:
         raise AssertionError("Can not soft remove user")
 
-    # step 8: try deleted user login
-    banned_user = await user_client.login(email=user.get("email"), password=user.get("password"))
-    if banned_user["success"] == True and banned_user["data"]["access_token"]:
+    # step 10: try deleted user login
+    banned_user = await user_client.login(email=user_data.get("email"), password=user_data.get("password"))
+    if banned_user["success"]:
         logger.success(f"Successfully again!")
     else:
         logger.error(f"Can not login user")
 
-    # step 9: unlock user
+    # step 11: unlock user
     if unblock_user := await admin_client.unblock_user(user.get("id")):
         logger.success(f"User unblock: {unblock_user['name']} {unblock_user['last_name']}")
     else:
         raise AssertionError("Can not unban user")
+
+    # step 12: try deleted user login again
+    user = await user_client.login(email=user_data.get("email"), password=user_data.get("password"))
+    if user["success"]:
+        logger.success(f"Successfully again!")
+    else:
+        logger.error(f"Can not login user")
 
 
     await user_client.close()

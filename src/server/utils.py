@@ -35,9 +35,10 @@ async def is_authorize(request: Request):
     token = decode(request)
     if isinstance(token, dict):
         if user := await db.get_user_by_id(token.get("user_id")):
-            if await db.validate_session(user.id, token.get("session_id")):
-                return user
-            else:
+            try:
+                if await db.validate_session(user.id, token.get("session_id")):
+                    return user
+            except:
                 raise HTTPException(status_code=401, detail="No session ID")
 
     raise HTTPException(status_code=401, detail="Bad token")
