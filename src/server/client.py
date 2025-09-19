@@ -2,16 +2,27 @@ import aiohttp
 
 from json import JSONDecodeError
 
+from src.server.models import Response, Ok, Error
+from logger import logger
 from config import cfg
 
 
 class Client:
     headers: dict
+    session: aiohttp.ClientSession | None
 
     def __init__(self):
-        self.session = aiohttp.ClientSession()
+        self.session = None
         self.headers = cfg.headers.copy()
-        self.close = self.session.close
+
+    async def __aenter__(self):
+        self.session = aiohttp.ClientSession()
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        if self.session:
+            await self.session.close()
+
 
     async def create_user(self, user: dict):
         return await self.post("api/users/register", json=user)
@@ -22,25 +33,21 @@ class Client:
             "password": password
         }
         resp = await self.post("api/users/login", json=data)
-        if resp["success"]:
-            self.headers["Authorization"] = f"Bearer {resp["data"]["access_token"]}"
+        if resp.success:
+            self.headers["Authorization"] = f"Bearer {resp.data["access_token"]}"
             return resp
         else:
-            return resp
+            return resp.data
 
     async def logout(self):
         return await self.get(f"api/users/logout")
 
-    async def get_user(self, resp):
-        data = {
-            "access_token": resp["data"]["access_token"],
-            "token_type": resp["data"]["token_type"]
-        }
-        return await self.post("api/users/me", json=data)
+    async def current_user(self):
+        return await self.get("api/users/me")
 
     async def change_role(self, user, role):
         data = {
-            "user_id": user.get("user_id"),
+            "user_id": user["user_id"],
             "role": role
         }
         return await self.post("api/admin/change-role", json=data)
@@ -80,18 +87,21 @@ class Client:
         )
         try:
             async with self.session.request(**kwargs) as response:
-                if response.status < 300:
+                try:
+                    data = await response.json()
                     try:
-                        data = await response.json()
-                    except JSONDecodeError:
-                        data = await response.text()
-                    return data
+                        resp = Response(**data)
+                        return resp
+                    except ValueError:
+                        if response.status < 300:
+                            return Ok(data=data)
+                        else:
+                            return Error(error=data)
 
-                elif response.status == 401:
-                    return "Unauthorized"
-
-                elif response.status >= 400:
-                    return "No access"
+                except JSONDecodeError:
+                    error = await response.text()
+                    logger.error(f"Can not parse response: {error}")
+                    return Error(error=error)
 
         except Exception as e:
-            print(f"[{method}] {path} -> {e}")
+            return {"success": False, "error": f"[{method}] {path} -> {e}"}

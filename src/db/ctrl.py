@@ -16,7 +16,7 @@ class DataBaseController(BaseDB):
         real_dict = user
         real_dict['password'] = user["password"].get_secret_value()
         try:
-            return await self.db.create(**user)
+            return await self.db.create(**real_dict)
         except IntegrityError:
             logger.warning(f"User already exists")
             return await self.get_by_email(user["email"])

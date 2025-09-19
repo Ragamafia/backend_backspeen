@@ -1,11 +1,32 @@
 import uuid
+from pydantic import BaseModel
 from fastapi import APIRouter, Depends
 
 from src.models import User
 from src.server.utils import create_token, is_authorize
-from src.server.api.models import NewUserRequest, LoginRequest, Ok, NoAccess, Error, EditUserRequest
+from src.server.api.models import NewUserRequest, LoginRequest, EditUserRequest
 
 from logger import logger
+
+
+class Response(BaseModel):
+    success: bool
+    data: dict | None
+    error: str | None
+
+
+class Ok(Response):
+    success: bool = True
+    error: str | None = None
+
+
+class Error(Response):
+    success: bool = False
+    data: dict | None = None
+
+
+class NoAccess(Error):
+    error: str = "Access denied"
 
 
 def register_users_router(app):
@@ -40,7 +61,7 @@ def register_users_router(app):
         logger.debug(f"User ID - {user.user_id} logged out")
         return NoAccess()
 
-    @users_router.post("/me")
+    @users_router.get("/me")
     async def auth(user: User = Depends(is_authorize)):
         if user:
             logger.info(f"Get user: {user.name} {user.last_name}")
