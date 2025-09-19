@@ -59,7 +59,7 @@ def register_users_router(app):
     async def logout(user: User = Depends(is_authorize)):
         await app.db.kill_session(user.user_id)
         logger.debug(f"User ID - {user.user_id} logged out")
-        return NoAccess()
+        return Ok(data={})
 
     @users_router.get("/me")
     async def auth(user: User = Depends(is_authorize)):

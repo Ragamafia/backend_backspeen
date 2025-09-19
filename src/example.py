@@ -72,15 +72,15 @@ async def main():
         logger.success(f"User {current['name']} {current['last_name']} logged out")
 
         # step 7: try getting info as a logged out user
-        if unauthorized := await handle_unauthorized(user.current_user, "Get current user"):
-            logger.error(f"Response: {unauthorized}")
+        await handle_unauthorized(user.current_user, "Get current user")
+        logger.success("Unauthorized")
 
         # step 8: login user again
         await handle_request(user.login, "User login", **USER_CREDS)
         logger.success(f"Authenticated successfully (USER)")
 
         # step 9: remove user
-        await handle_request(user.remove_user, "Remove user")
+        await handle_request(admin.remove_user, "Remove user")
         logger.success(f"User deleted")
 
         # step 10: try deleted user login

@@ -104,4 +104,4 @@ class Client:
                     return Error(error=error)
 
         except Exception as e:
-            return {"success": False, "error": f"[{method}] {path} -> {e}"}
+            return Error(error=f"[{method}] {path} -> {e}")
