@@ -3,8 +3,8 @@ from typing import Type
 from tortoise.models import Model
 from tortoise.exceptions import IntegrityError
 
-from src.db.base import BaseDB
-from src.db.table import UserDBModel, SessionDBModel
+from db.base import BaseDB
+from db.table import UserDBModel, SessionDBModel
 from loguru import logger
 
 

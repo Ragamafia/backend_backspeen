@@ -2,7 +2,7 @@ from json import JSONDecodeError
 
 import aiohttp
 
-from src.server.models import Response, Ok, Error
+from server.models import Response, Ok, Error
 from logger import logger
 from config import cfg
 

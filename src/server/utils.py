@@ -47,3 +47,8 @@ async def is_admin(user=Depends(is_authorize)):
     if user.role == "admin":
         return user
     raise HTTPException(status_code=401, detail={"error": "Not admin"})
+
+async def is_moderator(user=Depends(is_authorize)):
+    if user.role == "moderator":
+        return user
+    raise HTTPException(status_code=401, detail={"error": "Not moderator"})

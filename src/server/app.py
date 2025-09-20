@@ -1,8 +1,8 @@
 import uvicorn
 from fastapi import FastAPI
 
-from src.server.api.users import register_users_router
-from src.server.api.admin import register_admin_router
+from server.api.users import register_users_router
+from server.api.admin import register_admin_router
 from db.ctrl import DataBaseController
 from config import cfg
 

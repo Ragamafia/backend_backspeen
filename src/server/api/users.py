@@ -1,16 +1,12 @@
 import uuid
-from typing import Literal
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, field_validator, Secret, EmailStr
 
-from src.models import User
-from src.server.utils import create_token, is_authorize
-from src.server.models import Ok, Error
+from models import User
+from server.utils import create_token, is_authorize
+from server.models import Ok, Error
 from logger import logger
-
-
-Role = Literal["admin", "user", "moderator"]
 
 
 class NewUserRequest(BaseModel):

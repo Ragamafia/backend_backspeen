@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from src.models import User, Role
-from src.server.utils import is_admin
+from models import User, Role
+from server.utils import is_admin
 from logger import logger
 
 

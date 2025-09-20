@@ -3,7 +3,7 @@ from typing import Callable
 
 from pydantic import BaseModel
 
-from src.server.client import Client
+from server.client import Client
 from logger import logger
 from config import cfg
 
