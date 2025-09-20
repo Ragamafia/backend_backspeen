@@ -1,6 +1,6 @@
-import aiohttp
-
 from json import JSONDecodeError
+
+import aiohttp
 
 from src.server.models import Response, Ok, Error
 from logger import logger
@@ -37,7 +37,7 @@ class Client:
             self.headers["Authorization"] = f"Bearer {resp.data["access_token"]}"
             return resp
         else:
-            return resp.data
+            return resp
 
     async def logout(self):
         return await self.get(f"api/users/logout")
@@ -104,4 +104,4 @@ class Client:
                     return Error(error=error)
 
         except Exception as e:
-            return {"success": False, "error": f"[{method}] {path} -> {e}"}
+            return Error(error=f"[{method}] {path} -> {e}")

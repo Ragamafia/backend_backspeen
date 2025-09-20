@@ -1,9 +1,9 @@
 import asyncio
 from typing import Callable
 
-from src.server.client import Client
-from src.server.api.models import Response
+from pydantic import BaseModel
 
+from src.server.client import Client
 from logger import logger
 from config import cfg
 
@@ -21,6 +21,12 @@ USER = {
     "last_name": "Ragamafia",
     **USER_CREDS,
 }
+
+
+class Response(BaseModel):
+    success: bool
+    data: dict | None
+    error: str | None
 
 
 async def handle_request(coro: Callable, failed: str, *args, **kwargs):
@@ -72,52 +78,32 @@ async def main():
         logger.success(f"User {current['name']} {current['last_name']} logged out")
 
         # step 7: try getting info as a logged out user
-        if unauthorized := await handle_unauthorized(user.current_user, "Get current user"):
-            logger.error(f"Response: {unauthorized}")
+        await handle_unauthorized(user.current_user, "Get current user")
+        logger.success(f"Unauthorized")
 
         # step 8: login user again
         await handle_request(user.login, "User login", **USER_CREDS)
-        logger.success(f"Authenticated successfully (USER)")
+        logger.success(f"User authenticated successfully")
 
         # step 9: remove user
         await handle_request(user.remove_user, "Remove user")
         logger.success(f"User deleted")
 
         # step 10: try deleted user login
-        if unauthorized2 := await handle_unauthorized(user.login, "User login", **USER_CREDS):
-            print(unauthorized2)
-            logger.error(f"Response: {unauthorized2}")
+        await handle_unauthorized(user.login, "User login", **USER_CREDS)
+        logger.success(f"Unauthorized")
+
+        # step 10: unblock user
+        await handle_request(admin.unblock_user, "Unblock user", current["user_id"])
+        logger.success(f"User unblocked")
+
+        # step 11: unblocked user login
+        await handle_request(user.login, "User login", **USER_CREDS)
+        logger.success(f"Successfully again!")
+
+        # step 12: edit user
+        new_name = await handle_request(user.edit_user, "Edit user", new_name="Jack", new_last_name="Sparrow")
+        logger.success(f"User {current['name']} {current['last_name']} updated. New name: {new_name['name']} {new_name['last_name']}")
 
 
 asyncio.run(main())
-#     # step 9: remove user
-#     if removed_user := await user_client.remove_user():
-#         logger.debug(f"User deleted: {removed_user}")
-#     else:
-#         raise AssertionError("Can not soft remove user")
-#
-#     # step 10: try deleted user login
-#     deleted_user_resp = await user_client.login(email=USER["email"], password=USER["password"])
-#     if deleted_user_resp.success:
-#         logger.success(f"Successfully again!")
-#     else:
-#         logger.error(f"Can not login user")
-#
-#     # step 11: unlock user
-#     if unblock_user := await admin_client.unblock_user(current_user["user_id"]):
-#         logger.success(f"User unblock: {unblock_user.data['name']} {unblock_user.data['last_name']}")
-#     else:
-#         raise AssertionError("Can not unban user")
-#
-#     # step 12: unblocked user login
-#     user_resp = await user_client.login(email=USER["email"], password=USER["password"])
-#     if user_resp.success:
-#         logger.success(f"Successfully again!")
-#     else:
-#         logger.error(f"Can not login user")
-#
-#     # step 13: edit user
-#     if updated_user := await user_client.edit_user(new_name="Jack", new_last_name="Sparrow"):
-#         logger.info(f"User {current_user.data['name']} {current_user.data['last_name']} updated. New name: {updated_user.data['name']} {updated_user.data['last_name']}")
-#     else:
-#         raise AssertionError("Can not update user")

@@ -1,32 +1,37 @@
 import uuid
-from pydantic import BaseModel
+from typing import Literal
+
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel, field_validator, Secret, EmailStr
 
 from src.models import User
 from src.server.utils import create_token, is_authorize
-from src.server.api.models import NewUserRequest, LoginRequest, EditUserRequest
-
+from src.server.models import Ok, Error
 from logger import logger
 
 
-class Response(BaseModel):
-    success: bool
-    data: dict | None
-    error: str | None
+Role = Literal["admin", "user", "moderator"]
 
 
-class Ok(Response):
-    success: bool = True
-    error: str | None = None
+class NewUserRequest(BaseModel):
+    name: str
+    last_name: str
+    email: EmailStr
+    password: Secret[str]
+
+    @field_validator("email", mode="before")
+    def normalize_email(cls, v):
+        return v.lower()
 
 
-class Error(Response):
-    success: bool = False
-    data: dict | None = None
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
 
-class NoAccess(Error):
-    error: str = "Access denied"
+class EditUserRequest(BaseModel):
+    name: str
+    last_name: str
 
 
 def register_users_router(app):
@@ -51,7 +56,7 @@ def register_users_router(app):
                 await app.db.create_session(user.user_id, session_id)
                 return Ok(data=data)
             else:
-                return NoAccess()
+                return Error(error="Access denied")
         else:
             return Error(error="User not found")
 
@@ -59,7 +64,7 @@ def register_users_router(app):
     async def logout(user: User = Depends(is_authorize)):
         await app.db.kill_session(user.user_id)
         logger.debug(f"User ID - {user.user_id} logged out")
-        return NoAccess()
+        return Ok(data={})
 
     @users_router.get("/me")
     async def auth(user: User = Depends(is_authorize)):
@@ -67,14 +72,14 @@ def register_users_router(app):
             logger.info(f"Get user: {user.name} {user.last_name}")
             return user
         else:
-            return NoAccess()
+            return Error(error="Access denied")
 
     @users_router.delete("/")
     async def delete(user: User = Depends(is_authorize)):
         await app.db.update(user.user_id, is_active=False)
         await app.db.kill_session(user.user_id)
         logger.warning(f"User {user.name} {user.last_name} removed")
-        return NoAccess()
+        return Ok(data={})
 
     @users_router.post("/edit")
     async def edit_user(request: EditUserRequest, user: User = Depends(is_authorize)):

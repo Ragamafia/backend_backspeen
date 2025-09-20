@@ -3,7 +3,6 @@ from pydantic import BaseModel
 
 from src.models import User, Role
 from src.server.utils import is_admin
-
 from logger import logger
 
 
